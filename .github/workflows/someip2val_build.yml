@@ -95,8 +95,8 @@ jobs:
         with:
           pull: false
           push: true
-          file: ./someip2val/Dockerfile
-          context: "."
+          file: Dockerfile
+          context: "./someip2val"
           platforms: linux/amd64, linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
