@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: someip-feeder
+  labels:
+    app: someip-feeder
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: someip-feeder
+  template:
+    metadata:
+      labels:
+        app: someip-feeder
+    spec:
+      containers:
+        - name: someip-feeder
+          image: k3d-registry.localhost:12345/someip-feeder:local
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN", "SYS_ADMIN"]
+            runAsUser: 0 # run as root (or any other user)
+          ports:
+          - name: default
+            containerPort: 50051
+            protocol: TCP
+          env:
+          - name: SC_CAN
+            value: can0
+          - name: CAN
+            value: can0
+          - name:  BROKER_ADDR # VEHICLEDATABROKER_DAPR_APP_ID
+            value: 127.0.0.1:30555 # vehicledatabroker
+      imagePullSecrets:
+        - name: ghcr-io
+      hostIPC: true
+      hostNetwork: true
+      hostPID: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: someip-feeder-nodeport
+spec:
+  type: NodePort
+  selector:
+    app: someip-feeder
+  ports:
+    - port: 50051
+      targetPort: 50051
+      nodePort: 30051
