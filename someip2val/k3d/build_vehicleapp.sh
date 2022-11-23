@@ -13,9 +13,15 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ROOT_DIRECTORY=$( realpath "$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )/../../" )
-echo $ROOT_DIRECTORY
+
 APP_NAME="someip-feeder"
 
+BUILD_TARGET="x86_64"
+
+if [ $# -gt 0 ]; then
+    BUILD_TARGET="$1"
+fi
+
 cd $ROOT_DIRECTORY/someip2val
-DOCKER_BUILDKIT=1 docker build --progress=plain -t localhost:12345/$APP_NAME:local . --no-cache
+DOCKER_BUILDKIT=1 docker build --progress=plain -t localhost:12345/$APP_NAME:local . --no-cache --build-arg "ARCH=$BUILD_TARGET"
 #docker push localhost:12345/$APP_NAME:local

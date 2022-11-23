@@ -85,4 +85,4 @@ fi
 # if running from install, export LD_LIBRARY_PATH to vsomeip libs.
 [ -d "$SCRIPT_DIR/../lib" ] && export LD_LIBRARY_PATH="$SCRIPT_DIR/../lib:$LD_LIBRARY_PATH"
 
-./$VSOMEIP_APPLICATION_NAME --target=${BROKER_ADDR:-localhost:55555}
+./$VSOMEIP_APPLICATION_NAME
