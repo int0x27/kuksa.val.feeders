@@ -11,8 +11,8 @@ RUN pip3 install conan
 COPY . /src
 WORKDIR /src
 
-ARG ARCH
-ENV ARCH_ENV="${ARCH:-x86_64}"
+ARG TARGETPLATFORM
+ENV ARCH_ENV="${TARGETPLATFORM:-x86_64}"
 #RUN echo $ARCH_ENV
 RUN ./build-release.sh ${ARCH_ENV}
 WORKDIR "/src/target/$ARCH_ENV/release/install/bin"
