@@ -24,11 +24,13 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 TARGET_ARCH="$1"
-if [TARGET_ARCH = "linux/amd64"]; then
+
+if [ "$TARGET_ARCH" = "linux/amd64" ]; then
 	TARGET_ARCH="x86_64"
-else if [TARGET_ARCH = "linux/arm64"]; then
+elif [ "$TARGET_ARCH" = "linux/arm64" ]; then
 	TARGET_ARCH="aarch64"
 fi
+
 [ -z "$TARGET_ARCH" ] && TARGET_ARCH="x86_64"
 
 BUILD_DIR="$2"
