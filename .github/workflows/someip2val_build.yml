@@ -56,6 +56,11 @@ jobs:
             ${{github.workspace}}/someip2val/target/${{ matrix.target-arch }}/release/install/lib/libvsomeip*.so.3
           if-no-files-found: error
 
+  build_docker:
+    # reduce runtime requirements from ubuntu, ubuntu-18.04 fails for aarch64
+    runs-on: ubuntu-20.04
+    name: Build docker
+    steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 
