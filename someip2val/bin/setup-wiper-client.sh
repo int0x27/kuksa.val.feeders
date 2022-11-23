@@ -67,6 +67,4 @@ fi
 # if running from install, export LD_LIBRARY_PATH to vsomeip libs.
 [ -d "$SCRIPT_DIR/../lib" ] && export LD_LIBRARY_PATH="$SCRIPT_DIR/../lib:$LD_LIBRARY_PATH"
 
-echo
-echo "Execute: ./wiper_client --mode 2 --pos 110.0 --freq 40"
-echo
+./$VSOMEIP_APPLICATION_NAME --target="localhost:30555"

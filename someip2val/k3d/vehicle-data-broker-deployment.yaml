@@ -27,8 +27,7 @@ spec:
           ports:
             - name: default
               containerPort: 55555
-              protocol: TCP
-          args: ["--dummy-metadata"]              
+              protocol: TCP   
 
 ---
 apiVersion: v1

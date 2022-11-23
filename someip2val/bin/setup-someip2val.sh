@@ -18,9 +18,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -f "$SCRIPT_DIR/config/someip_feeder.json" ]; then
     VSOMEIP_CONFIGURATION="$SCRIPT_DIR/config/someip_feeder.json"
 else
-    GIT_ROOT=$(git rev-parse --show-toplevel)
-    if [ -n "$GIT_ROOT" ] && [ -f "$GIT_ROOT/someip2val/config/someip_feeder.json" ]; then
-        VSOMEIP_CONFIGURATION="$GIT_ROOT/someip2val/config/someip_feeder.json"
+    if [ -f "/src/config/someip_feeder.json" ]; then
+        VSOMEIP_CONFIGURATION="/src/config/someip_feeder.json"
     fi
 fi
 export VSOMEIP_CONFIGURATION
@@ -86,4 +85,4 @@ fi
 # if running from install, export LD_LIBRARY_PATH to vsomeip libs.
 [ -d "$SCRIPT_DIR/../lib" ] && export LD_LIBRARY_PATH="$SCRIPT_DIR/../lib:$LD_LIBRARY_PATH"
 
-./$VSOMEIP_APPLICATION_NAME
+./$VSOMEIP_APPLICATION_NAME --target=${BROKER_ADDR:-localhost:55555}
