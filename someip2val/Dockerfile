@@ -11,6 +11,7 @@ RUN pip3 install conan
 COPY . /src
 WORKDIR /src
 
+ARG TARGETARCH
 RUN ./build-release.sh $TARGETARCH
 
 FROM --platform=$TARGETPLATFORM ubuntu:20.04 as final
