@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: someip-feeder
-          image: k3d-registry.localhost:12345/someip-feeder:local
+          image: ghcr.io/softwaredefinedvehicle/kuksa.val.feeders.fork/someip-feeder:sha-3c4811b
           imagePullPolicy: Always
           securityContext:
             capabilities:
