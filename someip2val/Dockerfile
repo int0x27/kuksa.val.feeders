@@ -14,7 +14,8 @@ WORKDIR /src
 RUN ./build-release.sh $TARGETPLATFORM
 
 FROM --platform=$TARGETPLATFORM ubuntu:20.04 as final
-COPY --from=builder "/src/target/$TARGETPLATFORM/release/install/bin" "/bin"
+ARG TARGETARCH
+COPY --from=builder "/src/target/$TARGETARCH/release/install/bin" "/bin"
 WORKDIR "/bin"
 
 ENTRYPOINT "/bin/setup-someip2val.sh"
