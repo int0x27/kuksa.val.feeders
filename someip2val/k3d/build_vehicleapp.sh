@@ -23,5 +23,5 @@ if [ $# -gt 0 ]; then
 fi
 
 cd $ROOT_DIRECTORY/someip2val
-DOCKER_BUILDKIT=1 docker build --progress=plain -t localhost:12345/$APP_NAME:local . --no-cache --build-arg "ARCH=$BUILD_TARGET"
+DOCKER_BUILDKIT=1 docker build --progress=plain -t localhost:12345/$APP_NAME:local . --no-cache
 #docker push localhost:12345/$APP_NAME:local

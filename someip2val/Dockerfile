@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM --platform=$BUILDPLATFORM ubuntu:20.04 as builder
 
 ENV DEBIAN_FRONTEND="noninteractive"
 RUN DEBIAN_FRONTEND=noninteractive apt-get update -y && \
@@ -11,10 +11,10 @@ RUN pip3 install conan
 COPY . /src
 WORKDIR /src
 
-ARG TARGETPLATFORM
-ENV ARCH_ENV="${TARGETPLATFORM:-x86_64}"
-#RUN echo $ARCH_ENV
-RUN ./build-release.sh ${ARCH_ENV}
-WORKDIR "/src/target/$ARCH_ENV/release/install/bin"
+RUN ./build-release.sh $TARGETARCH
 
-ENTRYPOINT "/src/target/$ARCH_ENV/release/install/bin/setup-someip2val.sh"
+FROM --platform=$TARGETPLATFORM ubuntu:20.04 as final
+COPY --from=builder "/src/target/$TARGETARCH/release/install/bin" "/bin"
+WORKDIR "/bin"
+
+ENTRYPOINT "/bin/setup-someip2val.sh"
