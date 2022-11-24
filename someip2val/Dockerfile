@@ -14,8 +14,10 @@ WORKDIR /src
 RUN ./build-release.sh $TARGETPLATFORM
 
 FROM --platform=$TARGETPLATFORM ubuntu:20.04 as final
+RUN DEBIAN_FRONTEND=noninteractive apt-get update -y && \
+    apt-get install -y jq
 ARG TARGETARCH
-COPY --from=builder "/src/target/*/release/install/bin/*" "/bin"
-WORKDIR "/bin"
+COPY --from=builder "/src/target/*/release/install" "/install"
+WORKDIR "/install/bin"
 
-ENTRYPOINT "/bin/setup-someip2val.sh"
+ENTRYPOINT "/install/bin/setup-someip2val.sh"

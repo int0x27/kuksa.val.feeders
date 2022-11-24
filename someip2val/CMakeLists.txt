@@ -99,5 +99,7 @@ install(FILES
   ./config/someip_wiper_client.json
   ./config/someip_wiper_client-proxy.json
   ./config/someip_wiper_service.json
+  ./config/someip_feeder-proxy.json
+  ./config/someip_feeder.json
   DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/config"
 )
