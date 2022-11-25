@@ -361,8 +361,6 @@ def main(argv):
 
     if args.address:
         databroker_address = args.address
-    elif os.environ.get("DAPR_GRPC_PORT"):
-        databroker_address = "127.0.0.1:{}".format(os.environ.get("DAPR_GRPC_PORT"))
     elif os.environ.get("VDB_ADDRESS"):
         databroker_address = os.environ.get("VDB_ADDRESS")
     elif "databroker" in config and "address" in config["databroker"]:

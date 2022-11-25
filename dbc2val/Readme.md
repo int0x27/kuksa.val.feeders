@@ -111,7 +111,6 @@ A smaller excerpt from the above sample, with less signals.
 | mapping                       | mapping.yml     | [general].mapping    | MAPPING_FILE                  | `--mapping`           | Mapping file used to map CAN signals to databroker datapoints. Take a look on usage of the mapping file |
 | address                       | 127.0.0.1:55555 | [databroker].address | VDB_ADDRESS                   | `--address`           | Connect to data broker instance                                                                         |
 | usecase                       | kuksa      | [general].usecase    | USECASE                       | `--usecase`           | Switch between kuksa and databroker usecase                                                             |
-| DAPR_GRPC_PORT                | -               | -                    | DAPR_GRPC_PORT                | -                     | Override broker address & connect to DAPR sidecar @ 127.0.0.1:DAPR_GRPC_PORT                            |
 | VEHICLEDATABROKER_DAPR_APP_ID | -               | -                    | VEHICLEDATABROKER_DAPR_APP_ID | -                     | Add dapr-app-id metadata                                                                                |
 
 Configuration options have the following priority (highest at top).
