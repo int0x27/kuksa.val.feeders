@@ -20,6 +20,8 @@
 
 import argparse
 import configparser
+import contextlib
+import enum
 import logging
 import os
 import queue
@@ -27,6 +29,8 @@ import json
 import sys
 import time
 from signal import SIGINT, SIGTERM, signal
+from typing import Any
+from typing import Dict
 
 import canplayer
 import dbc2vssmapper
@@ -34,15 +38,18 @@ import dbcreader
 import grpc
 import j1939reader
 
-# kuksa related
-from kuksa_viss_client import KuksaClientThread
-# databroker related
+from kuksa_client import KuksaClientThread
+import kuksa_client.grpc
 import databroker
 
-# global variable for usecase, default databroker
-USE_CASE = ""
 
 log = logging.getLogger("dbcfeeder")
+
+
+class ServerType(str, enum.Enum):
+    KUKSA_VAL_SERVER = 'kuksa_val_server'
+    KUKSA_DATABROKER = 'kuksa_databroker'
+
 
 def init_logging(loglevel):
     # create console handler and set level to debug
@@ -87,7 +94,7 @@ class ColorFormatter(logging.Formatter):
 
 
 class Feeder:
-    def __init__(self):
+    def __init__(self, server_type: ServerType, kuksa_client_config: Dict[str, Any]):
         self._shutdown = False
         self._reader = None
         self._player = None
@@ -96,10 +103,12 @@ class Feeder:
         self._connected = False
         self._registered = False
         self._can_queue = queue.Queue()
+        self._server_type = server_type
+        self._kuksa_client_config = kuksa_client_config
+        self._exit_stack = contextlib.ExitStack()
 
     def start(
         self,
-        databroker_address,
         canport,
         dbcfile,
         mappingfile,
@@ -138,16 +147,19 @@ class Feeder:
             # use socketCAN
             log.info("Using socket CAN device '%s'", canport)
             self._reader.start_listening(bustype="socketcan", channel=canport)
-       
-        # databroker related
-        if USE_CASE=="databroker":
+
+        if self._server_type is ServerType.KUKSA_DATABROKER:
+            databroker_address = f"{self._kuksa_client_config['ip']}:{self._kuksa_client_config['port']}"
             log.info("Connecting to Data Broker using %s", databroker_address)
-            channel = grpc.insecure_channel(databroker_address)
-            channel.subscribe(
+            vss_client = self._exit_stack.enter_context(kuksa_client.grpc.VSSClient(
+                host=self._kuksa_client_config['ip'],
+                port=self._kuksa_client_config['port'],
+            ))
+            vss_client.channel.subscribe(
                 lambda connectivity: self.on_broker_connectivity_change(connectivity),
                 try_to_connect=False,
             )
-            self._provider = databroker.Provider(channel, grpc_metadata)
+            self._provider = databroker.Provider(vss_client, grpc_metadata)
         self._run()
 
     def stop(self):
@@ -158,6 +170,7 @@ class Feeder:
             self._reader.stop()
         if self._player is not None:
             self._player.stop()
+        self._exit_stack.close()
 
     def is_stopping(self):
         return self._shutdown
@@ -190,30 +203,21 @@ class Feeder:
     def _register_datapoints(self):
         log.info("Register datapoints")
         for entry in self._mapper.mapping:
-            if len(self._mapper.mapping[entry]["targets"]) != 1:
-                log.warning(
-                    "Singal %s has multiple targets: %s",
-                    entry,
-                    list(self._mapper.mapping[entry]["targets"].keys()),
+            for target_name, target_attr in self._mapper.mapping[entry]["targets"].items():
+                self._provider.register(
+                    target_name,
+                    target_attr["vss"]["datatype"].upper(),
+                    target_attr["vss"]["description"],
                 )
-            self._provider.register(
-                next(iter(self._mapper.mapping[entry]["targets"])),
-                self._mapper.mapping[entry]["databroker"]["datatype"],
-                self._mapper.mapping[entry]["databroker"]["changetype"],
-                self._mapper.mapping[entry]["vss"]["description"],
-            )
-        
+
     def _run(self):
-        # kuksa related
-        if USE_CASE=="kuksa":
-            global kuksaconfig
-            kuksa = KuksaClientThread(kuksaconfig)
+        if self._server_type is ServerType.KUKSA_VAL_SERVER:
+            kuksa = KuksaClientThread(self._kuksa_client_config)
             kuksa.start()
             kuksa.authorize()
-        
+
         while self._shutdown is False:
-            # databroker related
-            if USE_CASE=="databroker":
+            if self._server_type is ServerType.KUKSA_DATABROKER:
                 if not self._connected:
                     time.sleep(0.2)
                     continue
@@ -245,29 +249,19 @@ class Feeder:
                     else:
                         # get values out of the canreplay and map to desired signals
                         log.debug("Updating DataPoint(%s, %s)", target, value)
-                        # databroker related
-                        if USE_CASE=="databroker":
-                            # kuksa needs "false" and databroker False
-                            if value == "false":
-                                value = False
-                            # kuksa needs "true" and databroker True
-                            elif value == "true":
-                                value = True
-                            else:
-                                pass
+                        if self._server_type is ServerType.KUKSA_DATABROKER:
                             self._provider.update_datapoint(target, value)
-                        # kuksa related
-                        elif USE_CASE=="kuksa":
+                        elif self._server_type is ServerType.KUKSA_VAL_SERVER:
                             resp=json.loads(kuksa.setValue(target, str(value)))
                             if "error" in resp:
-                                if "message" in resp["error"]: 
+                                if "message" in resp["error"]:
                                    log.error("Error setting {}: {}".format(target, resp["error"]["message"]))
                                 else:
                                    log.error("Unknown error setting {}: {}".format(target, resp))
                         else:
-                            log.error("USE_CASE is not set to databroker or kuksa", exc_info=True)
+                            log.error("Unsupported server type: %s", server_type)
 
-            except grpc.RpcError:
+            except kuksa_client.grpc.VSSClientError:
                 log.error("Failed to update datapoints", exc_info=True)
             except queue.Empty:
                 pass
@@ -328,47 +322,55 @@ def main(argv):
         action="store_true",
         help="Use SocketCAN (overriding any use of --dumpfile)",
     )
-    parser.add_argument("--address", metavar="ADDR", help="Address of databroker")
     parser.add_argument(
         "--mapping",
         metavar="FILE",
         help="Mapping file used to map CAN signals to databroker datapoints",
     )
-    parser.add_argument("--usecase", metavar="UC", help="Switch between kuksa and databroker usecase")
+    parser.add_argument(
+        "--server-type",
+        help="Which type of server the feeder should connect to",
+        choices=[server_type.value for server_type in ServerType],
+        type=ServerType,
+    )
 
     args = parser.parse_args()
 
     config = parse_config(args.config)
-    
-    if args.usecase:
-        usecase = args.usecase
-    elif os.environ.get("USECASE"):
-        usecase = os.environ.get("USECASE")
-    elif "general" in config and "usecase" in config["general"]:
-        usecase = config["general"]["usecase"]
-    else:
-        usecase = "databroker"
-                  
-    global USE_CASE 
-    USE_CASE = usecase
 
-    # kuksa related
-    if USE_CASE=="kuksa":
-        global kuksaconfig
-        kuksaconfig = config
-        if "kuksa_val" in config:  
-            kuksaconfig = config["kuksa_val"]
-
-    if args.address:
-        databroker_address = args.address
-    elif os.environ.get("DAPR_GRPC_PORT"):
-        databroker_address = "127.0.0.1:{}".format(os.environ.get("DAPR_GRPC_PORT"))
-    elif os.environ.get("VDB_ADDRESS"):
-        databroker_address = os.environ.get("VDB_ADDRESS")
-    elif "databroker" in config and "address" in config["databroker"]:
-        databroker_address = config["databroker"]["address"]
+    if args.server_type:
+        server_type = args.server_type
+    elif os.environ.get("SERVER_TYPE"):
+        server_type = ServerType(os.environ.get("SERVER_TYPE"))
+    elif "general" in config and "server_type" in config["general"]:
+        server_type = ServerType(config["general"]["server_type"])
     else:
-        databroker_address = "127.0.0.1:55555"  # default
+        server_type = ServerType.KUKSA_VAL_SERVER
+
+    if server_type is ServerType.KUKSA_VAL_SERVER:
+        config.setdefault("kuksa_val_server", {})
+        config["kuksa_val_server"].setdefault("ip", "localhost")
+        config["kuksa_val_server"].setdefault("port", "8090")
+        config["kuksa_val_server"].setdefault("protocol", "ws")
+        config["kuksa_val_server"].setdefault("insecure", "False")
+        kuksa_client_config = config["kuksa_val_server"]
+    elif server_type is ServerType.KUKSA_DATABROKER:
+        config.setdefault("kuksa_databroker", {})
+        config["kuksa_databroker"].setdefault("ip", "127.0.0.1")
+        config["kuksa_databroker"].setdefault("port", "55555")
+        config["kuksa_databroker"].setdefault("protocol", "grpc")
+        config["kuksa_databroker"].setdefault("insecure", "True")
+        kuksa_client_config = config["kuksa_databroker"]
+
+        if os.environ.get("DAPR_GRPC_PORT"):
+            kuksa_client_config["ip"] = "127.0.0.1"
+            kuksa_client_config["port"] = os.environ.get("DAPR_GRPC_PORT")
+        elif os.environ.get("VDB_ADDRESS"):
+            vdb_address, vdb_port = os.environ.get("VDB_ADDRESS").split(':', maxsplit=1)
+            kuksa_client_config["ip"] = vdb_address
+            kuksa_client_config["port"] = vdb_port
+    else:
+        raise ValueError(f"Unsupported server type: {server_type}")
 
     if args.mapping:
         mappingfile = args.mapping
@@ -427,7 +429,7 @@ def main(argv):
     else:
         grpc_metadata = None
 
-    feeder = Feeder()
+    feeder = Feeder(server_type, kuksa_client_config)
 
     def signal_handler(signal_received, frame):
         log.info(f"Received signal {signal_received}, stopping...")
@@ -444,7 +446,6 @@ def main(argv):
 
     log.info("Starting CAN feeder")
     feeder.start(
-        databroker_address=databroker_address,
         canport=canport,
         dbcfile=dbcfile,
         mappingfile=mappingfile,
