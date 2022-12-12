@@ -17,11 +17,8 @@
 #include <atomic>
 #include <memory>
 
-//// NOTE: uncomment line below to include experimental collector subscribe actuator support
-#define DATABROKER_SUBSCRIBE_ACTUATOR
-
 #include "sdv/databroker/v1/collector.grpc.pb.h"
-
+#include "kuksa/val/v1/val.grpc.pb.h"
 
 namespace sdv {
 namespace broker_feeder {
@@ -61,10 +58,10 @@ class CollectorClient {
     ::grpc::Status UpdateDatapoints(::grpc::ClientContext* context,
                                     const ::sdv::databroker::v1::UpdateDatapointsRequest& request,
                                     ::sdv::databroker::v1::UpdateDatapointsReply* response);
-#ifdef DATABROKER_SUBSCRIBE_ACTUATOR
-    std::unique_ptr<::grpc::ClientReader<::sdv::databroker::v1::SubscribeActuatorTargetReply>> SubscribeActuatorTargets(
-        ::grpc::ClientContext* context, const ::sdv::databroker::v1::SubscribeActuatorTargetRequest& request);
-#endif
+
+    std::unique_ptr<::grpc::ClientReader<::kuksa::val::v1::SubscribeResponse>>
+    Subscribe(::grpc::ClientContext *context,
+              const ::kuksa::val::v1::SubscribeRequest &request);
 
     std::unique_ptr<grpc::ClientContext> createClientContext();
 
@@ -73,6 +70,7 @@ class CollectorClient {
     GrpcMetadata metadata_;
     std::shared_ptr<grpc::Channel> channel_;
     std::unique_ptr<sdv::databroker::v1::Collector::Stub> stub_;
+    std::unique_ptr<kuksa::val::v1::VAL::Stub> kuksa_stub_;
     std::atomic<bool> connected_;
 
     std::string broker_addr_;

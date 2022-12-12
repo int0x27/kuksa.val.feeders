@@ -221,41 +221,65 @@ void SomeipFeederAdapter::RunActuatorTargetSubscriber() {
 
         LOG_INFO << "Connected" << std::endl;
 
-        sdv::databroker::v1::SubscribeActuatorTargetRequest request;
-        request.add_paths(WIPER_MODE);
-        request.add_paths(WIPER_FREQUENCY);
-        request.add_paths(WIPER_TARGET_POSITION);
+        kuksa::val::v1::SubscribeRequest request;
 
-        sdv::databroker::v1::SubscribeActuatorTargetReply reply;
+        {
+            auto entry = request.add_entries();
+            entry->set_path(WIPER_MODE);
+            entry->add_fields(kuksa::val::v1::Field::FIELD_ACTUATOR_TARGET);
+        }
+        {
+            auto entry = request.add_entries();
+            entry->set_path(WIPER_FREQUENCY);
+            entry->add_fields(kuksa::val::v1::Field::FIELD_ACTUATOR_TARGET);
+        }
+        {
+            auto entry = request.add_entries();
+            entry->set_path(WIPER_TARGET_POSITION);
+            entry->add_fields(kuksa::val::v1::Field::FIELD_ACTUATOR_TARGET);
+        }
+
         actuator_target_subscriber_context_ = collector_client_->createClientContext();
-        std::unique_ptr<::grpc::ClientReader<sdv::databroker::v1::SubscribeActuatorTargetReply>> reader(
-            collector_client_->SubscribeActuatorTargets(actuator_target_subscriber_context_.get(), request));
-        while (reader->Read(&reply)) {
-            auto actuator_targets = reply.actuator_targets();
-            if (actuator_targets.contains(WIPER_MODE) &&
-                actuator_targets.contains(WIPER_FREQUENCY) &&
-                actuator_targets.contains(WIPER_TARGET_POSITION)) {
+        kuksa::val::v1::SubscribeResponse response;
+        std::unique_ptr<::grpc::ClientReader<kuksa::val::v1::SubscribeResponse>> reader(
+            collector_client_->Subscribe(actuator_target_subscriber_context_.get(), request));
+        while (reader->Read(&response)) {
+            std::map<std::string, kuksa::val::v1::Datapoint> actuator_targets;
+            for (auto update : response.updates()) {
+                if (update.entry().path() == WIPER_MODE) {
+                    actuator_targets[WIPER_MODE] = update.entry().actuator_target();
+                }
+                else if (update.entry().path() == WIPER_FREQUENCY) {
+                    actuator_targets[WIPER_FREQUENCY] = update.entry().actuator_target();
+                }
+                else if (update.entry().path() == WIPER_TARGET_POSITION) {
+                    actuator_targets[WIPER_TARGET_POSITION] = update.entry().actuator_target();
+                }
+            }
+            if (actuator_targets.count(WIPER_MODE) == 1 &&
+                actuator_targets.count(WIPER_FREQUENCY) == 1 &&
+                actuator_targets.count(WIPER_TARGET_POSITION) == 1) {
 
                 auto wiper_mode = actuator_targets.at(WIPER_MODE);
-                if (wiper_mode.value_case() != sdv::databroker::v1::Datapoint::ValueCase::kStringValue) {
+                if (wiper_mode.value_case() != kuksa::val::v1::Datapoint::ValueCase::kString) {
                     LOG_INFO << "wrong value type for " << WIPER_MODE << std::endl;
                     continue;
                 }
                 auto wiper_freq = actuator_targets.at(WIPER_FREQUENCY);
-                if (wiper_freq.value_case() != sdv::databroker::v1::Datapoint::ValueCase::kUint32Value) {
+                if (wiper_freq.value_case() != kuksa::val::v1::Datapoint::ValueCase::kUint32) {
                     LOG_INFO << "wrong value type for " << WIPER_FREQUENCY << std::endl;
                     continue;
                 }
 
                 auto wiper_target_position = actuator_targets.at(WIPER_TARGET_POSITION);
-                if (wiper_target_position.value_case() != sdv::databroker::v1::Datapoint::ValueCase::kFloatValue) {
+                if (wiper_target_position.value_case() != kuksa::val::v1::Datapoint::ValueCase::kFloat) {
                     LOG_INFO << "wrong value type for " << WIPER_TARGET_POSITION << std::endl;
                     continue;
                 }
 
-                auto wiper_mode_value = wiper_mode.string_value();
-                auto wiper_freq_value = wiper_freq.uint32_value();
-                auto wiper_target_position_value = wiper_target_position.float_value();
+                auto wiper_mode_value = wiper_mode.string();
+                auto wiper_freq_value = wiper_freq.uint32();
+                auto wiper_target_position_value = wiper_target_position.float_();
                 LOG_DEBUG << "wiper_mode_value: " << wiper_mode_value << std::endl;
                 LOG_DEBUG << "wiper_freq_value: " << std::dec << (int)wiper_freq_value << std::endl;
                 LOG_DEBUG << "wiper_target_position: " << wiper_target_position_value << std::endl;
