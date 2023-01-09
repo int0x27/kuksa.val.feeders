@@ -73,4 +73,4 @@ ENV VEHICLEDATABROKER_DAPR_APP_ID=vehicledatabroker
 
 ENV PYTHONUNBUFFERED=yes
 
-CMD ["./dbcfeeder-exe"]
+ENTRYPOINT ["./dbcfeeder-exe"]
