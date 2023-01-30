@@ -16,13 +16,14 @@ name: someip2val
 on:
   push:
     branches: [ main ]
-#    tags:
-#      - "v*.*.*"
+    tags:
+      - "v*.*.*"
   pull_request:
     paths:
       - ".github/workflows/someip2val.yml"
       - ".github/workflows/check_push_rights.yml"
       - "someip2val/**"
+  # workflow_call: TBD
   workflow_dispatch:
     inputs:
       build_binaries:
@@ -36,6 +37,16 @@ jobs:
   checkrights:
     uses: ./.github/workflows/check_push_rights.yml
     secrets: inherit
+
+  check:
+    name: Check context
+    runs-on: ubuntu-latest
+    steps:
+    - name: Dump GitHub context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: |
+        echo "$GITHUB_CONTEXT"
 
   build:
     name: Build Binaries
@@ -153,3 +164,11 @@ jobs:
           tags: |
             ttl.sh/kuksa.val.feeders/someip-feeder-${{github.sha}}:8h
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Temporarily save Docker image
+        uses: actions/upload-artifact@v3
+        with:
+          name: Container image
+          path: ${{github.workspace}}/someip2val.tar
+          retention-days: 1
+
