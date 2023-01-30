@@ -31,6 +31,7 @@ jobs:
           if [ "${{github.repository_owner}}" != "eclipse" ]; then
               echo "We are not eclipse repository. event: ${{github.event_name}} probably has rights."
               echo "have_secrets=true" >> $GITHUB_OUTPUT
+              exit 0
           fi
           # if [ "${{ github.event_name }}" == "pull_request" ] && [ "${{ github.event.pull_request.head.repo.full_name }}" == "boschglobal/kuksa.val.feeders" ]; then
           #     echo "We are an boschglobal pull request, so we should have rights"
