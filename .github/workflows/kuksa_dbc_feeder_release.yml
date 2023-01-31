@@ -28,6 +28,12 @@ jobs:
   create_release:
     name: Create release
     runs-on: ubuntu-latest
+    
+    # Permissions needed to push to ghcr.io. may not be granted on eclipse repo
+    permissions:
+      contents: read
+      packages: write
+
     needs:
       [
         kuksa_dbc_feeder,
