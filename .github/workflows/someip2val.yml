@@ -92,6 +92,10 @@ jobs:
     name: Build Docker
     needs: checkrights
 
+    permissions:
+      contents: read
+      packages: write
+
     steps:
 
       - name: Check Setup
@@ -133,8 +137,6 @@ jobs:
             type=ref,event=tag
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
 
       - name: "Build someip2val container and push to ghcr.io"
         if: ${{ needs.checkrights.outputs.have_secrets == 'true' && github.event_name != 'pull_request' }}
