@@ -37,6 +37,9 @@ jobs:
   checkrights:
     uses: ./.github/workflows/check_push_rights.yml
     secrets: inherit
+    permissions:
+      contents: read
+      packages: write
 
   build:
     name: Build Binaries

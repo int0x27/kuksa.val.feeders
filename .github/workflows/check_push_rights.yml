@@ -7,21 +7,6 @@ on:
 
 jobs:
 
-  check_context:
-    name: Check context
-    runs-on: ubuntu-latest
-    # # Permissions needed to push to ghcr.io. may not be granted on eclipse repo
-    # permissions:
-    #   contents: read
-    #   packages: write
-    steps:
-    - name: Dump GitHub context
-      env:
-        GITHUB_CONTEXT: ${{ toJson(github) }}
-      run: |
-        echo "$GITHUB_CONTEXT" | jq .
-
-
   check_push_rights:
     runs-on: ubuntu-latest
 
@@ -34,6 +19,12 @@ jobs:
       have_secrets: ${{ steps.check-secrets.outputs.have_secrets }}
 
     steps:
+    - name: Dump GitHub context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: |
+        echo "$GITHUB_CONTEXT" | jq .
+
     #Check we have access to secrets for pushing to GHCR. Forks do not
     - name: check GITHUB_TOKEN allows GHCR push access
       id: check-secrets
