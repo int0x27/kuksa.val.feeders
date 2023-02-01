@@ -10,10 +10,10 @@ jobs:
   check_context:
     name: Check context
     runs-on: ubuntu-latest
-    # Permissions needed to push to ghcr.io. may not be granted on eclipse repo
-    permissions:
-      contents: read
-      packages: write
+    # # Permissions needed to push to ghcr.io. may not be granted on eclipse repo
+    # permissions:
+    #   contents: read
+    #   packages: write
     steps:
     - name: Dump GitHub context
       env:
