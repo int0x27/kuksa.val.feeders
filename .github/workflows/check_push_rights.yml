@@ -6,17 +6,30 @@ on:
         value: ${{ jobs.check_push_rights.outputs.have_secrets }}
 
 jobs:
+
   check_push_rights:
     runs-on: ubuntu-latest
+
+    # Permissions needed to push to ghcr.io. may not be granted on eclipse repo
+    permissions:
+      contents: read
+      packages: write
+
     outputs:
       have_secrets: ${{ steps.check-secrets.outputs.have_secrets }}
 
     steps:
+    - name: Dump GitHub context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: |
+        echo "$GITHUB_CONTEXT" | jq .
+
     #Check we have access to secrets for pushing to GHCR. Forks do not
     - name: check GITHUB_TOKEN allows GHCR push access
       id: check-secrets
       run: |
-          if [ "${{ github.event_name }}" == "push" ] && [ "${{ github.repository }}" == "eclipse/kuksa.val.feeders" ]; then
+          if [ "${{ github.event_name }}" == "push" ] && [ "${{ github.repository_owner }}" == "eclipse" ]; then
             echo "We are pushing to kuksa.val.feeders upstream, so we should have rights"
             echo "have_secrets=true" >> $GITHUB_OUTPUT
             exit 0
@@ -44,3 +57,4 @@ jobs:
           echo "In case this is a PR it is coming from ${{ github.event.pull_request.head.repo.full_name }} "
           echo "have_secrets=false" >> $GITHUB_OUTPUT
       shell: bash
+

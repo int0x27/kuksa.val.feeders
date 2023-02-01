@@ -37,16 +37,9 @@ jobs:
   checkrights:
     uses: ./.github/workflows/check_push_rights.yml
     secrets: inherit
-
-  check:
-    name: Check context
-    runs-on: ubuntu-latest
-    steps:
-    - name: Dump GitHub context
-      env:
-        GITHUB_CONTEXT: ${{ toJson(github) }}
-      run: |
-        echo "$GITHUB_CONTEXT"
+    permissions:
+      contents: read
+      packages: write
 
   build:
     name: Build Binaries
@@ -92,6 +85,7 @@ jobs:
     name: Build Docker
     needs: checkrights
 
+    # Permissions needed to push to ghcr.io. may not be granted on eclipse repo
     permissions:
       contents: read
       packages: write
