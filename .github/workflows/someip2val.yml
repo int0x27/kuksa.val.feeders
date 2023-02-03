@@ -11,36 +11,41 @@
 # * SPDX-License-Identifier: Apache-2.0
 # ********************************************************************************/
 
-name: someip2val-build
+name: someip2val
 
 on:
   push:
     branches: [ main ]
+    tags:
+      - "v*.*.*"
   pull_request:
     paths:
-      - ".github/workflows/someip2val_build.yml"
+      - ".github/workflows/someip2val.yml"
+      - ".github/workflows/check_push_rights.yml"
       - "someip2val/**"
+  # workflow_call: TBD
   workflow_dispatch:
     inputs:
       build_binaries:
         description: 'Build Binaries'
-        # type: choice
-        # options:
-        #   - true
-        #   - false
         required: false
-        default: 'false'
+        type: boolean
+        default: false
 
 jobs:
 
   checkrights:
     uses: ./.github/workflows/check_push_rights.yml
     secrets: inherit
+    permissions:
+      contents: read
+      packages: write
 
   build:
     name: Build Binaries
+    needs: checkrights
     # build if explicitly requested or merging to main
-    if: ${{ github.event.inputs.build_binaries == 'true' || (needs.checkrights.outputs.have_secrets == 'true' && github.event_name != 'pull_request') }}
+    if: github.event.inputs.build_binaries == 'true' || (needs.checkrights.outputs.have_secrets == 'true' && github.event_name != 'pull_request')
     # reduce runtime requirements from ubuntu, ubuntu-18.04 fails for aarch64
     runs-on: ubuntu-20.04
     strategy:
@@ -80,19 +85,23 @@ jobs:
     name: Build Docker
     needs: checkrights
 
+    # Permissions needed to push to ghcr.io. may not be granted on eclipse repo
+    permissions:
+      contents: read
+      packages: write
+
     steps:
 
       - name: Check Setup
-        env:
-          OUT_HAVE_SECRETS: ${{ needs.checkrights.outputs.have_secrets }}
-          OUT_USER_NAME: ${{ github.repository_owner }}
-          OUT_EVENT_NAME: ${{ github.event_name }}
         run: |
           echo
-          echo "### have_secrets : $OUT_HAVE_SECRETS"
-          echo "### username     : $OUT_USER_NAME"
-          echo "### event_name   : $OUT_EVENT_NAME"
-          echo
+          echo "### have_secrets : ${{ needs.checkrights.outputs.have_secrets }}"
+          echo "### username     : ${{ github.repository_owner }}"
+          echo "### event        : ${{ github.event_name }}"
+          SCOPE=$(curl -sS -f -I -H "Authorization: token ${{secrets.GITHUB_TOKEN}}" https://api.github.com | grep "x-oauth-scopes:") || true
+          echo "### token scope  : $SCOPE"
+          exit 0
+        shell: bash
 
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -118,13 +127,10 @@ jobs:
           images: |
             ghcr.io/${{ github.repository }}/someip-feeder
           tags: |
-            type=sha
+            # type=sha
             type=ref,event=tag
-            type=edge
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
 
       - name: "Build someip2val container and push to ghcr.io"
         if: ${{ needs.checkrights.outputs.have_secrets == 'true' && github.event_name != 'pull_request' }}
@@ -154,3 +160,11 @@ jobs:
           tags: |
             ttl.sh/kuksa.val.feeders/someip-feeder-${{github.sha}}:8h
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Temporarily save Docker image
+        uses: actions/upload-artifact@v3
+        with:
+          name: Container image
+          path: ${{github.workspace}}/someip2val.tar
+          retention-days: 1
+
