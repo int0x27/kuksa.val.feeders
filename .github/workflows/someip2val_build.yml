@@ -141,7 +141,6 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
 
       - name: "Build someip2val container and push to ghcr.io"
         if: ${{ needs.checkrights.outputs.have_secrets == 'true' && github.event_name != 'pull_request' }}
@@ -150,6 +149,8 @@ jobs:
         with:
           pull: false
           push: true
+          outputs: |
+            type=oci,dest=./someip2val.tar
           file: ./someip2val/Dockerfile
           context: "./someip2val"
           platforms: linux/amd64, linux/arm64
@@ -165,6 +166,8 @@ jobs:
         with:
           pull: false
           push: true
+          outputs: |
+            type=oci,dest=./someip2val.tar
           file: ./someip2val/Dockerfile
           context: "./someip2val"
           platforms: linux/amd64, linux/arm64
