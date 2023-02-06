@@ -152,7 +152,7 @@ jobs:
         id: image_build
         uses: docker/build-push-action@v3
         with:
-          pull: true
+          pull: false
           push: false
           outputs: |
             type=oci,dest=./someip2val.tar
