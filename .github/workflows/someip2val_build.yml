@@ -175,8 +175,6 @@ jobs:
         with:
           pull: false
           push: true
-          outputs: |
-            type=oci,dest=./someip2val.tar
           file: ./someip2val/Dockerfile
           context: "./someip2val"
           platforms: linux/amd64, linux/arm64
@@ -192,8 +190,6 @@ jobs:
         with:
           pull: false
           push: true
-          outputs: |
-            type=oci,dest=./someip2val.tar
           file: ./someip2val/Dockerfile
           context: "./someip2val"
           platforms: linux/amd64, linux/arm64
