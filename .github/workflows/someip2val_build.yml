@@ -39,6 +39,8 @@ jobs:
 
   build:
     name: Build Binaries
+    needs: checkrights
+
     # build if explicitly requested or merging to main
     if: ${{ github.event.inputs.build_binaries == 'true' || (needs.checkrights.outputs.have_secrets == 'true' && github.event_name != 'pull_request') }}
     # reduce runtime requirements from ubuntu, ubuntu-18.04 fails for aarch64
@@ -131,35 +133,6 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-
-      # - id: repository-name-adjusted
-      #   name: Make repository name in lower case for docker upload.
-      #   uses: ASzc/change-string-case-action@v5
-      #   with:
-      #     string: ${{ github.repository }}
-
-      # - name: "Build image"
-      #   id: image_build
-      #   uses: docker/build-push-action@v3
-      #   with:
-      #     pull: true
-      #     push: false
-      #     outputs: |
-      #       type=oci,dest=./someip2val.tar
-      #     context: "./someip2val"
-      #     file: ./someip2val/Dockerfile
-      #     platforms: linux/amd64, linux/arm64
-      #     tags: |
-      #       ${{ steps.meta.outputs.tags }}
-      #       ttl.sh/kuksa.val.feeders/someip-feeder-${{github.sha}}:8h
-      #     labels: |
-      #       org.opencontainers.image.source=https://github.com/${{steps.repository-name-adjusted.outputs.lowercase}}
-      # - name: Temporarily save Docker image
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: Container image
-      #     path: ${{github.workspace}}/someip2val.tar
-      #     retention-days: 1
 
       - name: "Build someip2val container and push to ghcr.io"
         if: ${{ needs.checkrights.outputs.have_secrets == 'true' && github.event_name != 'pull_request' }}
