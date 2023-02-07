@@ -94,18 +94,13 @@ jobs:
           echo "  repository: ${{ github.repository }}",
           echo "  repository_owner: ${{github.repository_owner}}",
           echo "  secret_source: ${{github.secret_source}}",
-          echo "  event.workflow: ${{github.event.workflow}}",
+          echo "  event.workflow: \"${{github.event.workflow}}\"",
           echo "  event.repository.fork: ${{github.event.repository.fork}}",
           echo "  event.repository.full_name: ${{github.event.repository.full_name}}",
           echo "  event.pull_request.base.label: ${{github.event.pull_request.base.label}}",
           echo "  event.pull_request.head.label: ${{github.event.pull_request.head.label}}"
           echo "}"
-
           echo "### have_secrets : ${{ needs.checkrights.outputs.have_secrets }}"
-
-          # SCOPE=$(curl -sS -f -I -H "Authorization: token ${{secrets.GITHUB_TOKEN}}" https://api.github.com | grep "x-oauth-scopes:") || true
-          # echo "### token scope  : $SCOPE"
-          exit 0
         shell: bash
 
       - name: Checkout repository
@@ -132,10 +127,8 @@ jobs:
           images: |
             ghcr.io/${{ github.repository }}/someip-feeder
           tags: |
-            type=sha
-            type=ref,event=tag
-            type=edge
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
 
@@ -170,7 +163,6 @@ jobs:
 
       - name: "Build someip2val container and push to ghcr.io"
         if: ${{ needs.checkrights.outputs.have_secrets == 'true' && github.event_name != 'pull_request' }}
-        id: image_build_ghcr
         uses: docker/build-push-action@v3
         with:
           pull: false
@@ -185,7 +177,6 @@ jobs:
 
       - name: "Build someip2val container and push to ttl.sh"
         if: ${{ needs.checkrights.outputs.have_secrets != 'true' || github.event_name == 'pull_request' }}
-        id: image_build_ttl
         uses: docker/build-push-action@v3
         with:
           pull: false
