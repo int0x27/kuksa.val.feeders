@@ -144,7 +144,7 @@ jobs:
 
       - id: repository-name-adjusted
         name: Make repository name in lower case for docker upload.
-        uses: ASzc/change-string-case-action@v2
+        uses: ASzc/change-string-case-action@v5
         with:
           string: ${{ github.repository }}
 
@@ -152,7 +152,7 @@ jobs:
         id: image_build
         uses: docker/build-push-action@v3
         with:
-          pull: false
+          pull: true
           push: false
           outputs: |
             type=oci,dest=./someip2val.tar
