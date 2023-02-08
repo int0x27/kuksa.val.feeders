@@ -47,7 +47,10 @@ jobs:
           type=semver,pattern={{major}}.{{minor}}
           type=semver,pattern={{major}}
       
-    - run: echo "# have_secrets=${{ needs.checkrights.outputs.have_secrets }}""
+    - name: Check Rights
+      run: |
+        echo "### have_secrets : ${{ needs.checkrights.outputs.have_secrets }}"
+      shell: bash
       
     - name: Log in to the Container registry
       if: needs.checkrights.outputs.have_secrets == 'true'
