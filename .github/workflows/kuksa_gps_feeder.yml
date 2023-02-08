@@ -149,7 +149,7 @@ jobs:
 
     - name: Update Summary
       run: |
-        echo "## ttl.sh ephemeral image (valid for 1h)" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY"
-        echo ":package: \`\`\`docker run -it --rm ttl.sh/kuksa.val.feefers/gps-${{ github.sha }}:1h\`\`\`" >> $GITHUB_STEP_SUMMARY
+        echo '## ttl.sh ephemeral image (valid for 1h)' >> $GITHUB_STEP_SUMMARY
+        echo '' >> $GITHUB_STEP_SUMMARY
+        echo ':package: ```docker pull ttl.sh/kuksa.val.feefers/gps-${{ github.sha }}:1h```' >> $GITHUB_STEP_SUMMARY
       shell: bash
