@@ -13,7 +13,7 @@ LABEL org.opencontainers.image.source="https://github.com/eclipse/kuksa.val.feed
 LABEL org.opencontainers.image.authors="Wenwen.Chen@de.bosch.com"
 
 # alpine-sdk and linux-headers needed for Alpine to build grpcio for aarch64, not needed for platforms with prebuilt grpcio
-RUN apk update && apk add gpsd alpine-sdk linux-headers
+RUN apk add --no-cache gpsd alpine-sdk linux-headers
 ADD . /kuksa_gps_feeder
 WORKDIR /kuksa_gps_feeder
 RUN pip install --upgrade pip
@@ -25,4 +25,5 @@ ENV GPSD_SOURCE=udp://0.0.0.0:29998
 ENV GPSD_LISTENER_PORT=2948
 
 EXPOSE 29998/udp
+
 CMD gpsd -S ${GPSD_LISTENER_PORT} ${GPSD_SOURCE}; ./gpsd_feeder.py
