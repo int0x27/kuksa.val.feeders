@@ -6,35 +6,21 @@ on:
   pull_request:
     branches: [ main ]
     paths: 
+     - ".github/workflows/check_push_rights.yml"
      - ".github/workflows/kuksa_gps_feeder.yml"
      - "gps2val/**"
   workflow_dispatch:
   
 
 jobs:
-  check_push_rights:
-    runs-on: self-hosted
-    outputs:
-      have_secrets: ${{ steps.check-secrets.outputs.have_secrets }}
-      registry: ${{ steps.check-secrets.outputs.registry }}
-    
-    steps:
-    #Check we have access to secrets. Forks do not
-    - name: check for secrets needed to run demo
-      id: check-secrets
-      run: |
-          if [ ! -z "${{ secrets.PUSH_CONTAINER_TOKEN }}" ]; then
-            echo "Running from base repo. Will push to ghcr.io"
-            echo "::set-output name=have_secrets::true"
-            echo "::set-output name=registry::ghcr.io"
-          else
-            echo "No secrets for pushing. Will push ephemeral images to ttl.sh"
-            echo "::set-output name=have_secrets::false"
-            echo "::set-output name=registry::ttl.sh"
-          fi
+
+  checkrights:
+    uses: ./.github/workflows/check_push_rights.yml
+    secrets: inherit
+
   build:
     runs-on: self-hosted
-    needs: [check_push_rights]
+    needs: [checkrights]
    
     steps:
     - uses: actions/checkout@v3
@@ -44,7 +30,7 @@ jobs:
       uses: docker/metadata-action@v3.5.0
       with:
         # list of Docker images to use as base name for tags
-        images: ghcr.io/eclipse/kuksa.val.feeders/gps
+        images: ghcr.io/${{ github.repository }}/gps
         # generate Docker tags based on the following events/attributes
         tags: |
           type=ref,event=branch
@@ -74,7 +60,7 @@ jobs:
         push: true
         tags: |
           ${{ steps.meta.outputs.tags }}
-          ttl.sh/kuksa.val.feeders/gps-${{github.sha}}:1h
+          ttl.sh/${{ github.repository}}/gps-${{github.sha}}:1h
         labels: ${{ steps.meta.outputs.labels }}
         
             
@@ -87,7 +73,7 @@ jobs:
           linux/arm64
         context: gps2val
         push: true
-        tags: "ttl.sh/kuksa.val.feeders/gps-${{github.sha}}:1h"
+        tags: "ttl.sh/${{ github.repository}}/gps-${{github.sha}}:1h"
         labels: ${{ steps.meta.outputs.labels }}
         
   
