@@ -3,6 +3,8 @@ name: kuksa_gps_feeder
 on:
   push:
     branches: [ main ]
+    tags:
+      - "v*.*.*"
   pull_request:
     branches: [ main ]
     paths: 
@@ -19,7 +21,7 @@ jobs:
     secrets: inherit
 
   build:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [checkrights]
    
     steps:
