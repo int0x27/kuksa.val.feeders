@@ -28,9 +28,9 @@ jobs:
     - name: GitHub Context Summary
       run: |
         echo "github {"
-        echo "  event_name: ${{ github.event_name }}",
-        echo "  repository: ${{ github.repository }}",
-        echo "  repository_owner: ${{ github.repository_owner }}",
+        echo "  event_name: [${{ github.event_name }}]",
+        echo "  repository: [${{ github.repository }}]",
+        echo "  repository_owner: [${{ github.repository_owner }}]",
         echo "  secret_source: [${{ github.secret_source }}]",
         echo "  event.workflow: [${{ github.event.workflow}}]",
         echo "  event.repository.fork: ${{ github.event.repository.fork }}",
