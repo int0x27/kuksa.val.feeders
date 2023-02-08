@@ -22,10 +22,12 @@ jobs:
       run: |
           if [ ! -z "${{ secrets.PUSH_CONTAINER_TOKEN }}" ]; then
             echo "Has token. Will delete images ghcr.io"
-            echo "::set-output name=have_secrets::true"
+            # echo "::set-output name=have_secrets::true"
+            echo "have_secrets=true" >> $GITHUB_OUTPUT
           else
             echo "No token detected, will do nothing!"
-            echo "::set-output name=have_secrets::false"
+            # echo "::set-output name=have_secrets::false"
+            echo "have_secrets=false" >> $GITHUB_OUTPUT
           fi
   build:
     runs-on: ubuntu-latest
