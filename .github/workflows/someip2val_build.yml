@@ -64,7 +64,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Run build
-        working-directory: ${{github.workspace}}/someip2val
+        working-directory: ${{ github.workspace }}/someip2val
         run: ./build-release.sh ${{ matrix.target-arch }}
 
       - name: Upload Binaries
@@ -72,8 +72,8 @@ jobs:
         with:
           name: someip2val_${{ matrix.target-arch }}_release
           path: |
-            ${{github.workspace}}/someip2val/target/${{ matrix.target-arch }}/release/install/bin
-            ${{github.workspace}}/someip2val/target/${{ matrix.target-arch }}/release/install/lib/libvsomeip*.so.3
+            ${{ github.workspace }}/someip2val/target/${{ matrix.target-arch }}/release/install/bin
+            ${{ github.workspace }}/someip2val/target/${{ matrix.target-arch }}/release/install/lib/libvsomeip*.so.3
           if-no-files-found: error
 
   build_docker:
@@ -91,17 +91,6 @@ jobs:
 
       - name: Check Setup
         run: |
-          echo "github {"
-          echo "  event_name: ${{ github.event_name }}",
-          echo "  repository: ${{ github.repository }}",
-          echo "  repository_owner: ${{github.repository_owner}}",
-          echo "  secret_source: ${{github.secret_source}}",
-          echo "  event.workflow: \"${{github.event.workflow}}\"",
-          echo "  event.repository.fork: ${{github.event.repository.fork}}",
-          echo "  event.repository.full_name: ${{github.event.repository.full_name}}",
-          echo "  event.pull_request.base.label: ${{github.event.pull_request.base.label}}",
-          echo "  event.pull_request.head.label: ${{github.event.pull_request.head.label}}"
-          echo "}"
           echo "### have_secrets : ${{ needs.checkrights.outputs.have_secrets }}"
         shell: bash
 
@@ -145,7 +134,7 @@ jobs:
           platforms: linux/amd64, linux/arm64
           tags: |
             ${{ steps.meta.outputs.tags }}
-            ttl.sh/kuksa.val.feeders/someip-feeder-${{github.sha}}:8h
+            ttl.sh/kuksa.val.feeders/someip-feeder-${{ github.sha }}:8h
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: "Build someip2val container and push to ttl.sh"
@@ -158,5 +147,5 @@ jobs:
           context: "./someip2val"
           platforms: linux/amd64, linux/arm64
           tags: |
-            ttl.sh/kuksa.val.feeders/someip-feeder-${{github.sha}}:8h
+            ttl.sh/kuksa.val.feeders/someip-feeder-${{ github.sha }}:8h
           labels: ${{ steps.meta.outputs.labels }}
