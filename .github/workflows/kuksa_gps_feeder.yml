@@ -133,7 +133,6 @@ jobs:
         push: true
         tags: |
           ${{ steps.meta.outputs.tags }}
-          ttl.sh/kuksa.val.feefers/gps-${{ github.sha }}:1h
         labels: ${{ steps.meta.outputs.labels }}
 
     - name: Build ephemereal KUKSA gps feeder and push to ttl.sh
@@ -144,12 +143,13 @@ jobs:
           linux/amd64
         context: gps2val
         push: true
-        tags: "ttl.sh/kuksa.val.feefers/gps-${{ github.sha }}:1h"
+        tags: "ttl.sh/gps2val-${{ github.sha }}:1h"
         labels: ${{ steps.meta.outputs.labels }}
 
     - name: Update Summary
+      if: ${{ needs.checkrights.outputs.have_secrets != 'true' || github.event_name == 'pull_request' }}
       run: |
         echo '## ttl.sh ephemeral image (valid for 1h)' >> $GITHUB_STEP_SUMMARY
         echo '' >> $GITHUB_STEP_SUMMARY
-        echo ':package: ```docker pull ttl.sh/kuksa.val.feefers/gps-${{ github.sha }}:1h```' >> $GITHUB_STEP_SUMMARY
+        echo ':package: ```docker pull ttl.sh/gps2val-${{ github.sha }}:1h```' >> $GITHUB_STEP_SUMMARY
       shell: bash
