@@ -166,7 +166,7 @@ jobs:
         echo '  :package: ```docker pull '$EPHEMERAL_IMAGE'```' >> $GITHUB_STEP_SUMMARY
         echo '- run the image' >> $GITHUB_STEP_SUMMARY
         echo '  :rocket: ```docker run -it --rm '$EPHEMERAL_IMAGE'```' >> $GITHUB_STEP_SUMMARY
-        if [ "${{ github.repository_owner}} != "eclipse"' ]; then
+        if [ "${{ github.repository_owner}}" != "eclipse" ]; then
           echo '**NOTE:** Only **linux/amd64** is included (self-hosted runner ot available on forks)' >> $GITHUB_STEP_SUMMARY
         fi
 
@@ -178,7 +178,7 @@ jobs:
         echo '  :package: ```docker pull '${{ steps.meta.outputs.tags }}'```' >> $GITHUB_STEP_SUMMARY
         echo '- run the image' >> $GITHUB_STEP_SUMMARY
         echo '  :rocket: ```docker run -it --rm '${{ steps.meta.outputs.tags }}'```' >> $GITHUB_STEP_SUMMARY
-        if [ "${{ github.repository_owner}} != "eclipse"' ]; then
+        if [ "${{ github.repository_owner}}" != "eclipse" ]; then
           echo '**NOTE:** Only **linux/amd64** is included (self-hosted runner ot available on forks)' >> $GITHUB_STEP_SUMMARY
         fi
       shell: bash
