@@ -174,5 +174,5 @@ jobs:
         echo '- pull the image' >> $GITHUB_STEP_SUMMARY
         echo '  :package: ```docker pull ' ${{ steps.meta.outputs.tags }} '```' >> $GITHUB_STEP_SUMMARY
         echo '- run the image' >> $GITHUB_STEP_SUMMARY
-        echo '  :rocket: ```docker run -it --rm ' ${{ steps.meta.outputs.tags }} '```' >> $GITHUB_STEP_SUMMAR
+        echo '  :rocket: ```docker run -it --rm ' ${{ steps.meta.outputs.tags }} '```' >> $GITHUB_STEP_SUMMARY
       shell: bash
