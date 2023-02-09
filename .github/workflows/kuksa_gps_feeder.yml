@@ -13,6 +13,8 @@ on:
      - "gps2val/**"
   workflow_dispatch:
 
+env:
+  EPHEMERAL_IMAGE: "ttl.sh/kuksa.val.feefers/gps-${{ github.sha }}:1h"
 
 jobs:
 
@@ -24,6 +26,11 @@ jobs:
     if: ${{ github.repository_owner == 'eclipse' }}
     runs-on: [ self-hosted ]
     needs: checkrights
+
+    # With default permissions, release action fails on forks
+    permissions:
+      contents: read
+      packages: write
 
     steps:
     - uses: actions/checkout@v3
@@ -66,7 +73,7 @@ jobs:
         push: true
         tags: |
           ${{ steps.meta.outputs.tags }}
-          ttl.sh/kuksa.val.feefers/gps-${{ github.sha }}:1h
+          $EPHEMERAL_IMAGE
         labels: ${{ steps.meta.outputs.labels }}
 
     - name: Build ephemereal KUKSA gps feeder and push to ttl.sh
@@ -78,7 +85,7 @@ jobs:
           linux/arm64
         context: gps2val
         push: true
-        tags: "ttl.sh/kuksa.val.feefers/gps-${{ github.sha }}:1h"
+        tags: $EPHEMERAL_IMAGE
         labels: ${{ steps.meta.outputs.labels }}
 
   build:
@@ -86,6 +93,11 @@ jobs:
     if: ${{ github.repository_owner != 'eclipse' }}
     runs-on: ubuntu-latest
     needs: checkrights
+
+    # With default permissions, release action fails on forks
+    permissions:
+      contents: read
+      packages: write
 
     steps:
     - uses: actions/checkout@v3
@@ -143,13 +155,16 @@ jobs:
           linux/amd64
         context: gps2val
         push: true
-        tags: "ttl.sh/gps2val-${{ github.sha }}:1h"
+        tags: $EPHEMERAL_IMAGE
         labels: ${{ steps.meta.outputs.labels }}
 
     - name: Update Summary
       if: ${{ needs.checkrights.outputs.have_secrets != 'true' || github.event_name == 'pull_request' }}
       run: |
         echo '## ttl.sh ephemeral image (valid for 1h)' >> $GITHUB_STEP_SUMMARY
-        echo '' >> $GITHUB_STEP_SUMMARY
-        echo ':package: ```docker pull ttl.sh/gps2val-${{ github.sha }}:1h```' >> $GITHUB_STEP_SUMMARY
+        echo '- pull the image' >> $GITHUB_STEP_SUMMARY
+        echo '  :package: ```docker pull '$$EPHEMERAL_IMAGE'```' >> $GITHUB_STEP_SUMMARY
+        echo '- run the image' >> $GITHUB_STEP_SUMMARY
+        echo '  :rocket: ```docker run -it --rm '$$EPHEMERAL_IMAGE'```' >> $GITHUB_STEP_SUMMARY
+
       shell: bash

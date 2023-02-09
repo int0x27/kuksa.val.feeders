@@ -9,11 +9,6 @@ jobs:
   check_push_rights:
     runs-on: ubuntu-latest
 
-    # # Permissions needed to push to ghcr.io. may not be granted on eclipse repo
-    # permissions:
-    #   contents: read
-    #   packages: write
-
     outputs:
       have_secrets: ${{ steps.check-secrets.outputs.have_secrets }}
 
